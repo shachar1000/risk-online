@@ -1,0 +1,21 @@
+<head>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+<body>
+  <table class="table table-striped" border="1" cellpadding="5" cellspacing="5">
+      <thead class="thead-dark">
+        <tr>
+          {% for x in field_names %}
+            <th> {{x}} </th>
+          {% endfor %}
+        </tr>
+      </thead>
+      {% for row in data %}
+          <tr>
+          {% for d in row %}
+              <td>{{ d }}</td>
+          {% endfor %}
+          </tr>
+      {% endfor %}
+  </table>
+</body>

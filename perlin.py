@@ -7,29 +7,30 @@ class perlinClass():
         self.perlinGrid = self.perlin(x, y)
         self.perlinGrid = self.partition(3, self.perlinGrid)
 
-    def perlin(self, x, y, seed=1):
+    def perlin(self, x, y, seed=5):
         # permutation table
         np.random.seed(seed)
         p = np.arange(256,dtype=int)
         np.random.shuffle(p)
         p = np.stack([p,p]).flatten()
-        # print(p[:256])
-        # print("########")
-        # print(p[256:512])
-
+        # coordinates of the top-left
         xi = x.astype(int)
         yi = y.astype(int)
+        # internal coordinates
         xf = x - xi
         yf = y - yi
+        # fade factors
         u = fade(xf)
         v = fade(yf)
+        # noise components
         n00 = gradient(p[p[xi]+yi],xf,yf)
         n01 = gradient(p[p[xi]+yi+1],xf,yf-1)
         n11 = gradient(p[p[xi+1]+yi+1],xf-1,yf-1)
         n10 = gradient(p[p[xi+1]+yi],xf-1,yf)
+        # combine noises
         x1 = lerp(n00,n10,u)
-        x2 = lerp(n10,n11,u)
-        return lerp(x2,x1,v)
+        x2 = lerp(n01,n11,u) # FIX1: I was using n10 instead of n01
+        return lerp(x1,x2,v) # FIX2: I also had to reverse x1 and x2 here
 
     def partition(self, numPlayers, perlinGrid):
         minX = min(perlinGrid.flatten())
@@ -60,9 +61,9 @@ def gradient(h,x,y):
     return g[:,:,0] * x + g[:,:,1] * y
 
 if __name__ == '__main__':
-    lin = np.linspace(0,2,10,endpoint=False)
+    lin = np.linspace(0,6,1000,endpoint=False)
     #10 spaces between 0 and 1
-    y,x = np.meshgrid(lin,lin)
+    x, y = np.meshgrid(lin,lin)
     perlinGrid = perlinClass(x,y)
 
     plt.imshow(perlinGrid.perlinGrid)

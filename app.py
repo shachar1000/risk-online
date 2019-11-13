@@ -4,8 +4,13 @@ from flask_mysqldb import MySQL
 import numpy as np
 import matplotlib.pyplot as plt
 from perlin import perlinClass
-
+import voronoi
 import sys
+import io
+import base64
+from shapely.geometry import Point
+from shapely.geometry.polygon import Polygon
+from matplotlib import path
 
 sys.setrecursionlimit(1000000000)
 
@@ -92,32 +97,72 @@ def checkContiguity(array, start, end, previous): #previous x that called the re
             elif len(array[x-1]) is not 0:
                 if not (len(array[x-1]) is 1 and array[x-1][0] is start):
                     checkContiguity(array, x, end, start)
+def createGrid():
+    lin = np.linspace(0,2,10,endpoint=False)
+    #10 spaces between 0 and 1
+    y,x = np.meshgrid(lin,lin)
+    perlinGrid = perlinClass(x,y)
+    print(perlinGrid.perlinGrid)
 
 
-lin = np.linspace(0,2,10,endpoint=False)
-#10 spaces between 0 and 1
-y,x = np.meshgrid(lin,lin)
-perlinGrid = perlinClass(x,y)
-print(perlinGrid.perlinGrid)
+    w = len(perlinGrid.perlinGrid[0])
+    h = len(perlinGrid.perlinGrid)
 
+    neighborsPerlin = []
+    for y in range(len(perlinGrid.perlinGrid)):
+        for x in range(len(perlinGrid.perlinGrid[y])):
+            neighbors = [(x+a[0], y+a[1]) for a in
+                                [(-1,0), (1,0), (0,-1), (0,1)]
+                                if ( (0 <= x+a[0] < w) and (0 <= y+a[1] < h))]
+            neighborsPerlin.append(neighbors)
+    #neighborsPerlin = list(x for y in neighborsPerlin for x in y)
+    lenX = [len(array) for array in neighborsPerlin]
+    neighborsPerlin = [(10*tuple[1])+tuple[0]+1 for array in neighborsPerlin for tuple in array]
+    neighborsPerlin = [neighborsPerlin[sum(lenX[0:i]):sum(lenX[0:i+1])] for i in range(len(lenX))]
 
-w = len(perlinGrid.perlinGrid[0])
-h = len(perlinGrid.perlinGrid)
+    print(neighborsPerlin)
+    checkContiguity(neighborsPerlin, 4, 30, 4)
 
-neighborsPerlin = []
-for y in range(len(perlinGrid.perlinGrid)):
-    for x in range(len(perlinGrid.perlinGrid[y])):
-        neighbors = [(x+a[0], y+a[1]) for a in
-                            [(-1,0), (1,0), (0,-1), (0,1)]
-                            if ( (0 <= x+a[0] < w) and (0 <= y+a[1] < h))]
-        neighborsPerlin.append(neighbors)
-#neighborsPerlin = list(x for y in neighborsPerlin for x in y)
-lenX = [len(array) for array in neighborsPerlin]
-neighborsPerlin = [(10*tuple[1])+tuple[0]+1 for array in neighborsPerlin for tuple in array]
-neighborsPerlin = [neighborsPerlin[sum(lenX[0:i]):sum(lenX[0:i+1])] for i in range(len(lenX))]
+@app.route('/voronoi')
+def perlinVoronoi():
+    P = np.random.random((50,2))
+    polys = voronoi.voronoiPolygons(P)
+    #voronoi.displayVoronoi(polys)
 
-print(neighborsPerlin)
-checkContiguity(neighborsPerlin, 4, 30, 4)
+    lin = np.linspace(0,4,20,endpoint=False)
+    #10 spaces between 0 and 1
+    y,x = np.meshgrid(lin,lin)
+    perlinGrid = perlinClass(x,y)
+    plt.imshow(perlinGrid.perlinGrid)
+
+    #plt.savefig("C:/Users/limor/hello.png")
+
+    def fig_to_base64():
+        img = io.BytesIO()
+        plt.savefig(img, format='png',
+                    bbox_inches='tight')
+        img.seek(0)
+        return base64.b64encode(img.getvalue())
+
+    encoded = fig_to_base64()
+    my_html = '<img src="data:image/png;base64, {}">'.format(encoded.decode('utf-8'))
+
+    points = [Point(x/20, y/20) for y in range(len(perlinGrid.perlinGrid)) for x in range(len(perlinGrid.perlinGrid[y]))]
+    app.logger.info(points[1].x)
+    polyPlayer = [0]*len(polys)
+
+    
+
+    for y in range(len(perlinGrid.perlinGrid)):
+        for x in range(len(perlinGrid.perlinGrid[y])):
+            for count, poly in enumerate(polys):
+                polygon = Polygon(poly)
+                if polygon.contains(points[(y*20)+x]):
+                    polyPlayer[count] = perlinGrid.perlinGrid[y][x]
+
+    app.logger.info(polyPlayer)
+    src = voronoi.displayVoronoi(polys, random=False, players=polyPlayer)
+    return my_html+src
 
 if __name__ == "__main__":
     app.run(debug=True)

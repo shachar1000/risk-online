@@ -43,7 +43,8 @@ class perlinClass():
                 pixel = perlinGrid[y][x]
                 for i in range(3):
                     if ((rangeVector[i][0] <= pixel) and (pixel <= rangeVector[i][1])):
-                        perlinGrid[y][x] = rangeVector[i][0]
+                        perlinGrid[y][x] = round(rangeVector[i][0], 5)
+                        # round so we dont get 1.699999 and 1.69991000 for instance
         return perlinGrid
 
 def lerp(a,b,x):
@@ -61,7 +62,7 @@ def gradient(h,x,y):
     return g[:,:,0] * x + g[:,:,1] * y
 
 if __name__ == '__main__':
-    lin = np.linspace(0,6,1000,endpoint=False)
+    lin = np.linspace(0,3,100,endpoint=False)
     #10 spaces between 0 and 1
     x, y = np.meshgrid(lin,lin)
     perlinGrid = perlinClass(x,y)

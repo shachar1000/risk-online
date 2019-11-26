@@ -12,7 +12,6 @@ import io
 import base64
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
-from descartes import PolygonPatch
 
 def voronoiPolygons(P, delauny=True):
     if delauny==True:

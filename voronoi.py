@@ -12,6 +12,7 @@ import io
 import base64
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
+from descartes import PolygonPatch
 
 def voronoiPolygons(P, delauny=True):
     if delauny==True:
@@ -87,6 +88,33 @@ def centroids(polys):
     centroids = [(sumX[i]/lengths[i], sumY[i]/lengths[i]) for i  in range(len(polys))]
     return centroids
 
+def adjacent(list, n):
+    groups = [list[i:i + n] for i in range(len(list) + 1 - n)]
+    groups.append([list[0], list[::-1][0]])
+    return groups
+
+def noiseEdge(polys, centroids, count=0):
+    count = count + 1
+    polygon = [polys[0], centroids[0], polys[1], centroids[1]]
+    sides = adjacent(polygon, 2)
+    means = [[(sides[y][x][coor]+sides[y][x+1][coor])/2 for coor in range(2)] for y in range(len(sides)) for x in range(len(sides[y])-1)]
+    # means = []
+    # for i in range(len(sides)): # which side
+    #     means.append([])
+    #     for y in range(len(sides[i])-1): # which point
+    #         for coor in range(len(sides[i][y])): # which
+    #             means[i].append((sides[i][y][coor]+sides[i][y+1][coor])/2)
+    randomPoint = [random.uniform(centroids[0][coor], centroids[1][coor]) for coor in range(2)]
+    newPolys = [means[(i-1)*2:i*2] for i in range(1, 3)] # array of 2 arrays of polys for each new polygon
+    newCentroids = [[randomPoint, centroids[0]],[randomPoint, centroids[1]]]
+    print(newPolys)
+    print(newCentroids)
+    if count < 20:
+        noiseEdge(newPolys[0], newCentroids[0], count+1)
+        noiseEdge(newPolys[1], newCentroids[1], count+1)
+
+noiseEdge([[3, 3], [3, 0]], [[0, 1.5], [6, 1.5]])
+
 if __name__ == '__main__':
     # triangle = [
     # [3, 1],
@@ -96,17 +124,9 @@ if __name__ == '__main__':
     # print(triangle_csc(triangle))
     P = np.random.random((200,2))
     polys = voronoiPolygons(P)
-    polys = improveVoronoi(polys)
-    polys = improveVoronoi(polys)
-    polys = improveVoronoi(polys)
-    polys = improveVoronoi(polys)
-    polys = improveVoronoi(polys)
-    polys = improveVoronoi(polys)
-    polys = improveVoronoi(polys)
-    polys = improveVoronoi(polys)
-    polys = improveVoronoi(polys)
-    polys = improveVoronoi(polys)
 
+    for i in range(10):
+        polys = improveVoronoi(polys)
 
     point = Point(0.2, 0.2)
     plt.scatter([point.x], [point.y], marker='.', zorder=2)
@@ -114,22 +134,28 @@ if __name__ == '__main__':
         if Polygon(poly).contains(point):
             polys.pop(count)
 
-
-
-    displayVoronoi(polys)
     data = centroids(polys)
 
+    # for count, centroid in enumerate(data):
+    #     print(polys.pop(count))
 
+    displayVoronoi(polys)
 
     x_val = [x[0] for x in data]
     y_val = [x[1] for x in data]
 
     plt.scatter(x_val, y_val, marker='.', zorder=2)
 
+    def compare(a, b):
+        return [a[i] for i in range(len(a)) if a[i] in b]
 
-
-
+    for count1, poly1 in enumerate(polys):
+        for count2, poly2 in enumerate(polys):
+            commonVertices = compare(poly1, poly2)
+            if len(commonVertices) == 2:
+                #noiseEdge(commonVertices, [data[count1], data[count2]])
+                pass
     #X,Y = P[:,0],P[:,1]
     #plt.scatter(X, Y, marker='.', zorder=2)
-    print(polys)
+
     plt.show()

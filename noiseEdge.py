@@ -2,8 +2,8 @@ import random
 import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
-new = []
 
+new = []
 
 def random_color(str=True, alpha=0.5):
     rgb = [random.randint(0, 255) for i in range(3)]
@@ -17,6 +17,7 @@ def adjacent(list, n):
     groups.append([list[0], list[::-1][0]])
     return groups
 
+
 def noiseEdge(polys, centroids, count):
     polygon = [polys[0], centroids[0], polys[1], centroids[1]]
     sides = adjacent(polygon, 2)
@@ -28,56 +29,63 @@ def noiseEdge(polys, centroids, count):
     #         for coor in range(len(sides[i][y])): # which
     #             means[i].append((sides[i][y][coor]+sides[i][y+1][coor])/2)
     randomPoint = [random.uniform(centroids[0][coor], centroids[1][coor]) for coor in range(2)]
-    print(count)
-    print("randomPoint")
-    print(randomPoint)
+    #print(count)
+    #print("randomPoint")
+    #print(randomPoint)
     #newCentroids = [means[(i-1)*2:i*2] for i in range(1, 3)] # array of 2 arrays of polys for each new polygon
     newCentroids = [[means[0], means[3]],means[1:3]]
     newPolys = [[randomPoint, polys[0]],[randomPoint, polys[1]]]
-    print("newPolys")
-    print(newPolys)
-    print("newCentroids")
-    print(newCentroids)
-    print("  ")
-    if (count == 6):
+    #print("newPolys")
+    #print(newPolys)
+    #print("newCentroids")
+    #print(newCentroids)
+    #print("  ")
+    if (count == 2):
         new.append(newPolys)
-    if count < 7:
+    if count < 3:
         count = count + 1
         noiseEdge(newPolys[0], newCentroids[0], count)
         noiseEdge(newPolys[1], newCentroids[1], count)
 
 
 
-noiseEdge([[3, 3], [3, 0]], [[0, 1.5], [6, 1.5]], 0)
+def noiseEdgeWrapper(polys, centroids, count):
+    global new
+    new = []
+    noiseEdge(polys, centroids, count)
+    #run all recursion
+    linePairs = [line for pair in new for line in pair]
+    newDots = [dot for line in linePairs for dot in line]
+    #remove duplicates
+    # new_k = []
+    # for elem in newDots:
+    #     if elem not in new_k:
+    #         new_k.append(elem)
+    # newDots = new_k
+    #sort by y
+    newDots = sorted(newDots , key=lambda k: [k[1], k[0]]) # sort by y so lines connecting dots are in order
+    return newDots
+
+def displayNoiseEdge(newDots):
+    poly = [[3, 3],[6, 1.5],[3, 0],[0, 1.5]]
+    axes = plt.subplot(1,1,1)
+    plt.axis([-0, 10, -0, 10])
+    p = matplotlib.patches.Polygon(poly, facecolor=random_color(str=False, alpha=1))
+    axes.add_patch(p)
+
+    for i in range(len(newDots)-1):
+        plt.plot([newDots[i][0], newDots[i+1][0]], [newDots[i][1], newDots[i+1][1]], 'k-', lw=0.6)
 
 
+    x = [dot[0] for dot in newDots]
+    y = [dot[1] for dot in newDots]
 
+    #plt.scatter(x, y, zorder=10)
+    plt.show()
 
-
-poly = [[3, 3],[6, 1.5],[3, 0],[0, 1.5]]
-axes = plt.subplot(1,1,1)
-plt.axis([-0, 10, -0, 10])
-p = matplotlib.patches.Polygon(poly, facecolor=random_color(str=False, alpha=1))
-axes.add_patch(p)
-
-linePairs = [line for pair in new for line in pair]
-newDots = [dot for line in linePairs for dot in line]
-
-new_k = []
-for elem in newDots:
-    if elem not in new_k:
-        new_k.append(elem)
-newDots = new_k
-
-newDots = sorted(newDots , key=lambda k: [k[1], k[0]]) # sort by y
-
-for i in range(len(newDots)-1):
-    plt.plot([newDots[i][0], newDots[i+1][0]], [newDots[i][1], newDots[i+1][1]], 'k-', lw=0.6)
-
-print(newDots)
-
-x = [dot[0] for dot in newDots]
-y = [dot[1] for dot in newDots]
-
-#plt.scatter(x, y, zorder=10)
-plt.show()
+if __name__ == '__main__':
+    newDots = noiseEdgeWrapper([[3, 3], [3, 0]], [[0, 1.5], [6, 1.5]], 0)
+    newDots = noiseEdgeWrapper([[3, 3], [3, 0]], [[0, 1.5], [6, 1.5]], 0)
+    newDots = noiseEdgeWrapper([[3, 3], [3, 0]], [[0, 1.5], [6, 1.5]], 0)
+    newDots = noiseEdgeWrapper([[3, 3], [3, 0]], [[0, 1.5], [6, 1.5]], 0)
+    displayNoiseEdge(newDots)

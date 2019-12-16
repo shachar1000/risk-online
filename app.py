@@ -151,7 +151,7 @@ def perlinVoronoi():
     app.logger.info(points[1].x)
     polyPlayer = [0]*len(polys)
 
-    
+
 
     for y in range(len(perlinGrid.perlinGrid)):
         for x in range(len(perlinGrid.perlinGrid[y])):
